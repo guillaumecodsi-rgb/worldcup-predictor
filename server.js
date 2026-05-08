@@ -9,20 +9,69 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============ JSON Database ============
+// ============ JSONBin.io Cloud Database ============
+const JSONBIN_ID = process.env.JSONBIN_ID || '69fdc4d3c0954111d8f460d4';
+const JSONBIN_KEY = process.env.JSONBIN_KEY || '$2a$10$Ij.8HE/BbvlvgooDH6FdqOTN89OeHbWI5AIdZJEl1QUMj.GEAHlFG';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
+let dbCache = null;
+let saveTimeout = null;
 
 function loadDB() {
-  if (!fs.existsSync(DB_PATH)) {
-    const initial = { players: [], matches: [], predictions: [], nextId: { player: 1, match: 1, prediction: 1 } };
+  if (dbCache) return dbCache;
+  // Load from local file on first call (populated from JSONBin at startup)
+  if (fs.existsSync(DB_PATH)) {
+    dbCache = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+  } else {
+    dbCache = { players: [], matches: [], predictions: [], nextId: { player: 1, match: 1, prediction: 1 } };
     fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    fs.writeFileSync(DB_PATH, JSON.stringify(initial, null, 2));
+    fs.writeFileSync(DB_PATH, JSON.stringify(dbCache, null, 2));
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+  return dbCache;
 }
 
 function saveDB(db) {
+  dbCache = db;
+  // Save locally immediately
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+
+  // Debounce cloud save — push to JSONBin every 3 seconds
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => syncToCloud(), 3000);
+}
+
+async function syncToCloud() {
+  if (!dbCache) return;
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify(dbCache)
+    });
+    console.log('☁️ Synced to JSONBin');
+  } catch (err) {
+    console.error('❌ JSONBin sync failed:', err.message);
+  }
+}
+
+// On startup: pull latest from JSONBin
+async function initFromCloud() {
+  try {
+    const response = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await response.json();
+    if (data.record && data.record.players) {
+      dbCache = data.record;
+      fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+      fs.writeFileSync(DB_PATH, JSON.stringify(dbCache, null, 2));
+      console.log('☁️ Loaded from JSONBin:', dbCache.players.length, 'players,', dbCache.matches.length, 'matches');
+    }
+  } catch (err) {
+    console.error('⚠️ Could not load from JSONBin, using local:', err.message);
+  }
 }
 
 // ============ API ROUTES ============
@@ -596,9 +645,13 @@ function autoSeed() {
   console.log(`✅ Seeded ${added} matches`);
 }
 
-autoSeed();
+// Start server: load from cloud first, then seed if needed, then listen
+async function start() {
+  await initFromCloud();
+  autoSeed();
+  app.listen(PORT, () => {
+    console.log(`⚽ World Cup Predictor running at http://localhost:${PORT}`);
+  });
+}
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`⚽ World Cup Predictor running at http://localhost:${PORT}`);
-});
+start();
