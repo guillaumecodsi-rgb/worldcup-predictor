@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EU 3PX World Cup 2026 Predictor</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ============ HOMEPAGE ============ -->
+  <section id="homepage" class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content-wrapper">
+      <!-- Left panel -->
+      <div class="hero-leaderboard" id="hero-leaderboard-individual">
+        <h3>👥 Registered Players</h3>
+        <div class="hero-lb-list" id="hero-lb-players">
+          <p class="lb-placeholder">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Center content -->
+      <div class="hero-center">
+        <img src="https://digitalhub.fifa.com/transform/3d2df4f6-5765-48f9-9498-8f498a6025a1/FIFA-World-Cup-2026-logo-horizontal?io=transform:fill,width:500&quality=75" 
+             alt="FIFA World Cup 2026" class="hero-logo" onerror="this.style.display='none'">
+        <h1 class="hero-title">EU 3PX World Cup 2026 Predictor</h1>
+        <p class="hero-subtitle">Predict every match. Beat your colleagues. Claim the glory.</p>
+        <div class="hero-stats">
+          <div class="stat-item"><span class="stat-number">48</span><span class="stat-label">Teams</span></div>
+          <div class="stat-item"><span class="stat-number">104</span><span class="stat-label">Matches</span></div>
+          <div class="stat-item"><span class="stat-number">16</span><span class="stat-label">Host Cities</span></div>
+        </div>
+        <button class="btn-hero" onclick="showRulesPage()">🎮 Join the Game — It's Free!</button>
+        <p class="hero-login-link">Already registered? <a href="#" onclick="showAuth('login'); return false;">Login here</a></p>
+        
+        <!-- Toggle leaderboards button -->
+        <button class="btn-show-leaderboards" onclick="toggleHeroLeaderboards()">📊 Show Leaderboards</button>
+      </div>
+
+      <!-- Right panel -->
+      <div class="hero-leaderboard" id="hero-leaderboard-team">
+        <h3>✅ Predictions Complete</h3>
+        <div class="hero-lb-list" id="hero-lb-teams">
+          <p class="lb-placeholder">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboards (hidden by default) -->
+    <div class="hero-leaderboards-row" id="hero-leaderboards-row" style="display:none;">
+      <div class="hero-leaderboard hero-lb-inline">
+        <h3>🏆 Top Players</h3>
+        <div class="hero-lb-list" id="hero-lb-top-players">
+          <p class="lb-placeholder">No scores yet</p>
+        </div>
+      </div>
+      <div class="hero-leaderboard hero-lb-inline">
+        <h3>👥 Top Teams</h3>
+        <div class="hero-lb-list" id="hero-lb-top-teams">
+          <p class="lb-placeholder">No scores yet</p>
+        </div>
+      </div>
+      <div class="hero-leaderboard hero-lb-inline">
+        <h3>🔥 Longest Streak</h3>
+        <div class="hero-lb-list" id="hero-lb-top-streaks">
+          <p class="lb-placeholder">No streaks yet</p>
+        </div>
+      </div>
+      <div class="hero-leaderboard hero-lb-inline">
+        <h3>🎯 Expert Picks</h3>
+        <div class="hero-lb-list" id="hero-lb-top-experts">
+          <p class="lb-placeholder">No experts yet</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULES / JOIN PAGE ============ -->
+  <section id="rules-join-page" style="display:none;">
+    <div class="rules-join-hero">
+      <div class="rules-join-overlay"></div>
+      <div class="rules-join-content">
+        <a href="#" onclick="goBackHome(); return false;" class="back-link back-link-light">← Back to Home</a>
+        <h1>📖 How It Works</h1>
+        <p class="rules-join-subtitle">Simple rules, big fun. Here's everything you need to know.</p>
+      </div>
+    </div>
+
+    <div class="rules-join-body-wrapper">
+      <div class="rules-join-body">
+      <!-- Team photo -->
+      <div class="team-photo-container">
+        <img src="team-photo.png" alt="EU 3PX Team" class="team-photo">
+      </div>
+
+      <div class="rules-join-grid">
+        <div class="rules-card">
+          <span class="rules-card-icon">🎯</span>
+          <h3>Predict Scores</h3>
+          <p>Enter your predicted score for every World Cup match before midnight the day of the game.</p>
+        </div>
+        <div class="rules-card">
+          <span class="rules-card-icon">⚡</span>
+          <h3>Earn Points</h3>
+          <p><strong>3 points</strong> for exact score. <strong>1 point</strong> for correct outcome (win/draw/loss).</p>
+        </div>
+        <div class="rules-card">
+          <span class="rules-card-icon">🏆</span>
+          <h3>Climb the Leaderboard</h3>
+          <p>Compete individually and as a team. Tiebreaker: most exact scores.</p>
+        </div>
+        <div class="rules-card">
+          <span class="rules-card-icon">⏰</span>
+          <h3>Deadlines</h3>
+          <p>Predictions lock at <strong>midnight (00:00)</strong> on the day of the match. Submit the night before!</p>
+        </div>
+        <div class="rules-card">
+          <span class="rules-card-icon">🔄</span>
+          <h3>Change Anytime</h3>
+          <p>Update your predictions as many times as you want before the deadline.</p>
+        </div>
+        <div class="rules-card">
+          <span class="rules-card-icon">🆓</span>
+          <h3>100% Free</h3>
+          <p>No cost, no catch. Just bragging rights and glory.</p>
+        </div>
+      </div>
+
+      <div class="rules-scoring-detail">
+        <h2>⚽ Scoring Examples</h2>
+        <table class="rules-table">
+          <thead><tr><th>Your Prediction</th><th>Actual Result</th><th>Points</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>2 - 1</td><td>2 - 1</td><td class="points">3 pts ✓✓</td><td>Exact score!</td></tr>
+            <tr><td>3 - 1</td><td>2 - 0</td><td class="points">1 pt ✓</td><td>Correct winner (home)</td></tr>
+            <tr><td>1 - 1</td><td>0 - 0</td><td class="points">1 pt ✓</td><td>Correct draw</td></tr>
+            <tr><td>2 - 0</td><td>1 - 3</td><td>0 pts ✗</td><td>Wrong outcome</td></tr>
+            <tr><td colspan="2">🏆 Predict tournament winner correctly</td><td class="points">5 pts</td><td>Bonus at end of tournament</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rules-cta">
+        <button class="btn-hero" onclick="showAuth('register')">🚀 Register Now</button>
+        <p class="hero-login-link" style="margin-top:1rem;">Already have an account? <a href="#" onclick="showAuth('login'); return false;">Login here</a></p>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APP HEADER (shown after login) ============ -->
+  <header id="app-header" style="display:none;">
+    <div class="header-inner">
+      <h1 class="app-title">⚽ EU 3PX World Cup 2026 Predictor</h1>
+      <nav id="nav-bar">
+        <button onclick="showSection('home')">Home</button>
+        <button onclick="showSection('predictions')">My Predictions</button>
+        <button onclick="showSection('standings')">WC Standings</button>
+        <button onclick="showSection('leaderboard')">Leaderboard</button>
+        <button onclick="showSection('rules')">Rules</button>
+        <button onclick="logout()">Logout</button>
+        <span id="player-badge"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app-main" style="display:none;">
+    <!-- Auth Section -->
+    <section id="auth-section" style="display:none;">
+      <div class="auth-page">
+        <div class="auth-visual">
+          <img src="trophy.png" alt="World Cup Trophy" class="auth-player-img">
+        </div>
+        <div class="card auth-card">
+          <a href="#" onclick="goBackHome(); return false;" class="back-link">← Back to Home</a>
+          <h2>Join the Game</h2>
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('register')">Register</button>
+            <button class="tab" onclick="switchTab('login')">Login</button>
+          </div>
+
+          <form id="register-form" onsubmit="register(event)">
+            <div class="form-group">
+              <label for="reg-name">Your Name</label>
+              <input type="text" id="reg-name" required placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+              <label for="reg-alias">Choose a Login</label>
+              <input type="text" id="reg-alias" required placeholder="e.g. john123">
+              <small style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-top:0.3rem;display:block;">This is your unique username. Remember it — you'll need it to log back in.</small>
+            </div>
+            <div class="form-group">
+              <label for="reg-country">Country You Support</label>
+              <select id="reg-country" required>
+                <option value="">Select a country...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="reg-team">Your Team</label>
+              <select id="reg-team" required>
+                <option value="">Select your team...</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Register & Play ⚽</button>
+          </form>
+
+          <form id="login-form" style="display:none;" onsubmit="login(event)">
+            <div class="form-group">
+              <label for="login-alias">Your Login</label>
+              <input type="text" id="login-alias" required placeholder="Enter your login">
+            </div>
+            <button type="submit" class="btn-primary">Login ⚽</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Predictions Section -->
+    <section id="predictions-section" style="display:none;">
+      <div class="section-banner predictions-banner">
+        <img src="https://digitalhub.fifa.com/transform/4b93b163-773b-4e93-84f7-e364a8ddf3f8/All-FWC-2026-matches-16x9?focuspoint=0.77,0.45&io=transform:fill,height:200,width:900&quality=70" alt="" class="section-banner-img">
+        <div class="section-banner-overlay"></div>
+        <h2 class="section-banner-title">📋 My Predictions</h2>
+      </div>
+      <div class="card">
+        <p class="info-text">Predict the score for each match. Predictions lock at midnight on match day.</p>
+        
+        <!-- Tournament Winner Prediction -->
+        <div class="winner-prediction-box">
+          <h3>🏆 Who will win the World Cup?</h3>
+          <p class="info-text">Pick the team you think will lift the trophy. +5 bonus points if correct! <strong>⚠️ Once submitted, you cannot change it.</strong></p>
+          <div class="winner-select-row">
+            <select id="winner-prediction">
+              <option value="">Select a team...</option>
+            </select>
+            <button id="winner-submit-btn" onclick="submitWinnerPrediction()" class="btn-primary" style="width:auto;padding:0.6rem 1.2rem;">Lock My Pick 🔒</button>
+            <span id="winner-saved-badge" style="display:none;"></span>
+          </div>
+        </div>
+
+        <div id="matches-container"></div>
+        <button onclick="submitPredictions()" class="btn-primary">Submit Predictions ⚽</button>
+      </div>
+    </section>
+
+    <!-- Leaderboard Section -->
+    <section id="leaderboard-section" style="display:none;">
+      <div class="section-banner leaderboard-banner">
+        <div class="section-banner-overlay"></div>
+        <h2 class="section-banner-title">🏆 Leaderboard</h2>
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="switchLeaderboard('individual')">Individual</button>
+          <button class="tab" onclick="switchLeaderboard('team')">By Team</button>
+          <button class="tab" onclick="switchLeaderboard('streaks')">🔥 Streaks</button>
+          <button class="tab" onclick="switchLeaderboard('experts')">🎯 Expert Picks</button>
+        </div>
+        <div id="leaderboard-individual"></div>
+        <div id="leaderboard-team" style="display:none;"></div>
+        <div id="leaderboard-streaks" style="display:none;"></div>
+        <div id="leaderboard-experts" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- Standings Section -->
+    <section id="standings-section" style="display:none;">
+      <div class="section-banner standings-banner">
+        <div class="section-banner-overlay"></div>
+        <h2 class="section-banner-title">🌍 World Cup Standings</h2>
+      </div>
+      <div class="card">
+        <p class="info-text">Live group standings. Top 2 qualify directly, 3rd place may advance.</p>
+        <div id="standings-container"></div>
+      </div>
+    </section>
+
+    <!-- Rules Section -->
+    <section id="rules-section" style="display:none;">
+      <div class="section-banner rules-banner">
+        <div class="section-banner-overlay"></div>
+        <h2 class="section-banner-title">📖 Rules of the Game</h2>
+      </div>
+      <div class="card">
+        <div class="rules-content">
+          <h3>🎯 How to Play</h3>
+          <ol>
+            <li><strong>Register</strong> — Enter your name, Amazon alias, pick the country you support, and select your work team.</li>
+            <li><strong>Predict</strong> — For each World Cup match, enter your predicted score (e.g. 2-1).</li>
+            <li><strong>Score points</strong> — Earn points based on how accurate your predictions are.</li>
+            <li><strong>Climb the leaderboard</strong> — Compete individually and as a team!</li>
+          </ol>
+          <h3>⚽ Scoring System</h3>
+          <table class="rules-table">
+            <thead><tr><th>Result</th><th>Points</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>Exact score</td><td class="points">3 pts</td><td>You predict 2-1, result is 2-1</td></tr>
+              <tr><td>Correct outcome</td><td class="points">1 pt</td><td>You predict 3-1, result is 2-0</td></tr>
+              <tr><td>Wrong prediction</td><td>0 pts</td><td>You predict 1-0, result is 0-2</td></tr>
+              <tr><td>Correct tournament winner</td><td class="points">5 pts</td><td>You pick Brazil, Brazil wins the final</td></tr>
+            </tbody>
+          </table>
+          <h3>⏰ Deadlines</h3>
+          <ul>
+            <li>Predictions lock at <strong>midnight (00:00) on the day of the match</strong>.</li>
+            <li>You can update predictions as many times as you want before the deadline.</li>
+          </ul>
+          <h3>🏆 Leaderboard</h3>
+          <ul>
+            <li><strong>Individual</strong> — Ranked by total points. Tiebreaker: most exact scores.</li>
+            <li><strong>Team</strong> — Total points of all team members combined.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>EU 3PX World Cup 2026 Predictor — Free to play, bragging rights guaranteed 🏆</p>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — World Cup Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #0f1923; color: #e8e8e8; min-height: 100vh; padding: 2rem; }
+    h1 { color: #d4af37; margin-bottom: 0.5rem; }
+    .subtitle { color: rgba(255,255,255,0.6); margin-bottom: 2rem; }
+    
+    .login-box { max-width: 400px; margin: 4rem auto; text-align: center; }
+    .login-box input { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(22,36,53,0.8); color: white; font-size: 1rem; margin-bottom: 1rem; font-family: inherit; }
+    .login-box button { width: 100%; padding: 0.8rem; border-radius: 8px; border: none; background: #8b1538; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .login-box button:hover { background: #a01d45; }
+    
+    .admin-panel { max-width: 800px; margin: 0 auto; }
+    .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+    .filter-bar select, .filter-bar input { padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(22,36,53,0.8); color: white; font-family: inherit; }
+    .filter-bar label { color: rgba(255,255,255,0.6); font-size: 0.85rem; }
+    
+    .match-item { background: rgba(22,36,53,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+    .match-item.completed { border-color: rgba(45,138,78,0.4); background: rgba(45,138,78,0.1); }
+    .match-info { flex: 1; min-width: 200px; }
+    .match-info .teams { font-weight: 600; font-size: 0.95rem; }
+    .match-info .meta { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+    .match-scores { display: flex; align-items: center; gap: 0.4rem; }
+    .match-scores input { width: 50px; text-align: center; padding: 0.4rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(15,25,35,0.8); color: white; font-size: 1.1rem; font-weight: 600; }
+    .match-scores span { color: rgba(255,255,255,0.4); }
+    .btn-save { padding: 0.5rem 1rem; border-radius: 6px; border: none; background: #28a745; color: white; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+    .btn-save:hover { background: #2dbe4e; }
+    .btn-save:disabled { background: #555; cursor: not-allowed; }
+    .current-score { color: #d4af37; font-weight: 700; font-size: 1.1rem; }
+    
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #1a2a3a; color: white; padding: 0.8rem 1.5rem; border-radius: 8px; opacity: 0; transition: all 0.3s; z-index: 1000; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #28a745; }
+    .toast.error { background: #dc3545; }
+    
+    .stats { display: flex; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat-box { background: rgba(22,36,53,0.8); border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; padding: 1rem 1.5rem; text-align: center; }
+    .stat-box .num { font-size: 1.8rem; font-weight: 700; color: #d4af37; }
+    .stat-box .label { font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div id="login-section" class="login-box">
+    <h1>🔐 Admin Panel</h1>
+    <p class="subtitle">Enter admin password to manage match results</p>
+    <input type="password" id="admin-pass" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()">
+    <button onclick="adminLogin()">Login</button>
+  </div>
+
+  <div id="admin-section" class="admin-panel" style="display:none;">
+    <h1>⚽ Match Results Admin</h1>
+    <p class="subtitle">Enter final scores after each match. Points are calculated automatically.</p>
+    
+    <!-- Tournament Winner -->
+    <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;">
+      <h3 style="color:#d4af37;margin-bottom:0.5rem;">🏆 Tournament Winner</h3>
+      <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:0.8rem;">Set the tournament winner to award 5 bonus points to players who predicted correctly.</p>
+      <div style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap;">
+        <select id="admin-winner-select" style="padding:0.5rem 1rem;border-radius:6px;border:1px solid rgba(212,175,55,0.4);background:rgba(15,25,35,0.8);color:white;font-family:inherit;min-width:200px;">
+          <option value="">Select winner...</option>
+        </select>
+        <button onclick="setTournamentWinner()" class="btn-save" style="background:#d4af37;color:#1a1a2e;">Set Winner & Award Points</button>
+        <span id="current-winner" style="color:#d4af37;font-weight:600;"></span>
+      </div>
+      <div style="margin-top:1rem;padding-top:0.8rem;border-top:1px solid rgba(255,255,255,0.1);">
+        <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:0.5rem;">Lock all players' winner predictions (prevents further changes). Players who haven't picked will be left blank.</p>
+        <button onclick="lockAllWinnerPredictions()" class="btn-save" style="background:#dc3545;">🔒 Lock All Winner Predictions</button>
+        <span id="lock-all-status" style="color:rgba(255,255,255,0.6);font-size:0.8rem;margin-left:0.5rem;"></span>
+      </div>
+    </div>
+
+    <!-- Manage Players -->
+    <div style="background:rgba(22,36,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;">
+      <h3 style="color:#e8e8e8;margin-bottom:0.5rem;">👥 Manage Players</h3>
+      <button onclick="loadPlayersAdmin()" class="btn-save" style="margin-bottom:0.8rem;">Load Players</button>
+      <div id="players-admin-list"></div>
+    </div>
+
+    <!-- Update Knockout Teams -->
+    <div style="background:rgba(22,36,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;">
+      <h3 style="color:#e8e8e8;margin-bottom:0.5rem;">🏟️ Update Knockout Match Teams</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:0.8rem;">Fill in team names for TBD knockout matches. Players can predict once teams are set.</p>
+      <button onclick="loadTBDMatches()" class="btn-save" style="margin-bottom:0.8rem;">Load TBD Matches</button>
+      <div id="tbd-matches-list"></div>
+    </div>
+
+    <div class="stats" id="stats-bar"></div>
+    
+    <div class="filter-bar">
+      <div>
+        <label>Filter:</label>
+        <select id="filter-status" onchange="renderMatches()">
+          <option value="pending">Pending results</option>
+          <option value="completed">Completed</option>
+          <option value="all">All matches</option>
+        </select>
+      </div>
+      <div>
+        <label>Date:</label>
+        <input type="date" id="filter-date" onchange="renderMatches()">
+      </div>
+      <button onclick="saveAllResults()" class="btn-save" style="padding:0.6rem 1.5rem;font-size:1rem;">💾 Save All Results</button>
+    </div>
+    
+    <div id="matches-list"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const ADMIN_PASSWORD = 'worldcup2026';
+    let matches = [];
+
+    function adminLogin() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === ADMIN_PASSWORD) {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('admin-section').style.display = 'block';
+        loadMatches();
+        loadWinnerAdmin();
+      } else {
+        showToast('Wrong password', 'error');
+      }
+    }
+
+    async function loadWinnerAdmin() {
+      // Populate dropdown
+      const countries = ["Algeria","Argentina","Australia","Austria","Belgium","Bosnia and Herzegovina","Brazil","Cabo Verde","Canada","Colombia","Congo DR","Côte d'Ivoire","Croatia","Curaçao","Czechia","Ecuador","Egypt","England","France","Germany","Ghana","Haiti","IR Iran","Iraq","Japan","Jordan","Korea Republic","Mexico","Morocco","Netherlands","New Zealand","Norway","Panama","Paraguay","Portugal","Qatar","Saudi Arabia","Scotland","Senegal","South Africa","Spain","Sweden","Switzerland","Tunisia","Türkiye","Uruguay","USA","Uzbekistan"];
+      const select = document.getElementById('admin-winner-select');
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+
+      // Check current winner
+      const res = await fetch('/api/admin/winner');
+      const data = await res.json();
+      if (data.winner) {
+        document.getElementById('current-winner').textContent = `Current: ${data.winner}`;
+        select.value = data.winner;
+      }
+    }
+
+    async function setTournamentWinner() {
+      const winner = document.getElementById('admin-winner-select').value;
+      if (!winner) { showToast('Select a team first', 'error'); return; }
+      if (!confirm(`Set ${winner} as tournament winner? This will award 5 points to all players who predicted them.`)) return;
+
+      const res = await fetch('/api/admin/set-winner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ winner_team: winner })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`${winner} set as winner! ${data.players_awarded} player(s) awarded 5 bonus points.`, 'success');
+        document.getElementById('current-winner').textContent = `Current: ${winner}`;
+      }
+    }
+
+    async function lockAllWinnerPredictions() {
+      if (!confirm('Lock ALL players\' winner predictions? No one will be able to change their pick after this.')) return;
+
+      const res = await fetch('/api/admin/lock-winner-predictions', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Locked! ${data.locked} player(s) with picks, ${data.blank} left blank.`, 'success');
+        document.getElementById('lock-all-status').textContent = `✅ All locked (${data.locked} picks, ${data.blank} blank)`;
+      } else {
+        showToast('Error locking predictions', 'error');
+      }
+    }
+
+    async function loadMatches() {
+      const res = await fetch('/api/matches');
+      matches = await res.json();
+      renderStats();
+      renderMatches();
+    }
+
+    function renderStats() {
+      const completed = matches.filter(m => m.is_completed).length;
+      const pending = matches.length - completed;
+      document.getElementById('stats-bar').innerHTML = `
+        <div class="stat-box"><div class="num">${matches.length}</div><div class="label">Total Matches</div></div>
+        <div class="stat-box"><div class="num">${completed}</div><div class="label">Completed</div></div>
+        <div class="stat-box"><div class="num">${pending}</div><div class="label">Pending</div></div>
+      `;
+    }
+
+    function renderMatches() {
+      const status = document.getElementById('filter-status').value;
+      const dateFilter = document.getElementById('filter-date').value;
+      
+      let filtered = matches.filter(m => m.team_home !== 'TBD' && m.team_away !== 'TBD');
+      if (status === 'pending') filtered = filtered.filter(m => !m.is_completed);
+      if (status === 'completed') filtered = filtered.filter(m => m.is_completed);
+      if (dateFilter) filtered = filtered.filter(m => m.match_date === dateFilter);
+
+      const container = document.getElementById('matches-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.5);">No matches found.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(m => {
+        const homeVal = m.is_completed ? m.score_home : '';
+        const awayVal = m.is_completed ? m.score_away : '';
+        return `<div class="match-item ${m.is_completed ? 'completed' : ''}">
+          <div class="match-info">
+            <div class="teams">${m.team_home} vs ${m.team_away}</div>
+            <div class="meta">${m.match_date} · ${m.group_stage || ''}${m.match_number ? ' #' + m.match_number : ''}</div>
+          </div>
+          <div class="match-scores">
+            <input type="number" min="0" max="20" id="home-${m.id}" value="${homeVal}" placeholder="H">
+            <span>-</span>
+            <input type="number" min="0" max="20" id="away-${m.id}" value="${awayVal}" placeholder="A">
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function saveAllResults() {
+      const inputs = document.querySelectorAll('.match-scores input');
+      const results = {};
+
+      inputs.forEach(input => {
+        const id = input.id;
+        const matchId = id.replace('home-', '').replace('away-', '');
+        const side = id.startsWith('home-') ? 'home' : 'away';
+        if (!results[matchId]) results[matchId] = {};
+        results[matchId][side] = input.value;
+      });
+
+      let saved = 0;
+      let errors = 0;
+
+      for (const [matchId, scores] of Object.entries(results)) {
+        if (scores.home === '' || scores.away === '') continue; // Skip empty
+        try {
+          const res = await fetch(`/api/matches/${matchId}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ score_home: parseInt(scores.home), score_away: parseInt(scores.away) })
+          });
+          if (res.ok) saved++;
+          else errors++;
+        } catch (e) { errors++; }
+      }
+
+      if (saved > 0) {
+        showToast(`Saved ${saved} result(s)!${errors > 0 ? ` (${errors} errors)` : ''}`, 'success');
+        loadMatches();
+      } else if (errors > 0) {
+        showToast(`${errors} error(s) occurred`, 'error');
+      } else {
+        showToast('No scores to save — fill in at least one match', 'error');
+      }
+    }
+
+    // ============ MANAGE PLAYERS ============
+    async function loadPlayersAdmin() {
+      const res = await fetch('/api/players');
+      const players = await res.json();
+      const container = document.getElementById('players-admin-list');
+      if (players.length === 0) {
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.5);">No players registered.</p>';
+        return;
+      }
+      container.innerHTML = players.map(p => `
+        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="flex:1;">${p.name} <span style="color:rgba(255,255,255,0.4);">(${p.alias}) — ${p.team}</span></span>
+          <button onclick="removePlayer(${p.id}, '${p.name}')" style="background:#dc3545;color:white;border:none;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    async function removePlayer(id, name) {
+      if (!confirm(`Remove player "${name}"? This will delete all their predictions.`)) return;
+      const res = await fetch(`/api/admin/players/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast(`${name} removed`, 'success');
+        loadPlayersAdmin();
+      } else {
+        showToast('Error removing player', 'error');
+      }
+    }
+
+    // ============ TBD KNOCKOUT MATCHES ============
+    const ALL_TEAMS = ["Algeria","Argentina","Australia","Austria","Belgium","Bosnia and Herzegovina","Brazil","Cabo Verde","Canada","Colombia","Congo DR","Côte d'Ivoire","Croatia","Curaçao","Czechia","Ecuador","Egypt","England","France","Germany","Ghana","Haiti","IR Iran","Iraq","Japan","Jordan","Korea Republic","Mexico","Morocco","Netherlands","New Zealand","Norway","Panama","Paraguay","Portugal","Qatar","Saudi Arabia","Scotland","Senegal","South Africa","Spain","Sweden","Switzerland","Tunisia","Türkiye","Uruguay","USA","Uzbekistan"];
+
+    function teamDropdown(id, selected) {
+      const opts = ALL_TEAMS.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`).join('');
+      return `<select id="${id}" style="padding:0.4rem;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(15,25,35,0.8);color:white;width:160px;font-family:inherit;">
+        <option value="">Select team...</option>${opts}</select>`;
+    }
+
+    async function loadTBDMatches() {
+      const res = await fetch('/api/matches');
+      const matches = await res.json();
+      const tbdMatches = matches.filter(m => m.team_home === 'TBD' || m.team_away === 'TBD');
+      const container = document.getElementById('tbd-matches-list');
+
+      if (tbdMatches.length === 0) {
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.5);">No TBD matches remaining.</p>';
+        return;
+      }
+
+      container.innerHTML = tbdMatches.map(m => `
+        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
+          <span style="min-width:120px;color:rgba(255,255,255,0.5);font-size:0.8rem;">${m.match_date} · ${m.group_stage}${m.match_number ? ' #' + m.match_number : ''}</span>
+          ${teamDropdown('tbd-home-' + m.id, m.team_home === 'TBD' ? '' : m.team_home)}
+          <span style="color:rgba(255,255,255,0.4);">vs</span>
+          ${teamDropdown('tbd-away-' + m.id, m.team_away === 'TBD' ? '' : m.team_away)}
+          <button onclick="updateMatchTeams(${m.id})" class="btn-save" style="font-size:0.8rem;padding:0.4rem 0.8rem;">Save</button>
+        </div>
+      `).join('');
+    }
+
+    async function updateMatchTeams(matchId) {
+      const home = document.getElementById(`tbd-home-${matchId}`).value.trim();
+      const away = document.getElementById(`tbd-away-${matchId}`).value.trim();
+      if (!home || !away) { showToast('Enter both team names', 'error'); return; }
+
+      const res = await fetch(`/api/matches/${matchId}/teams`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_home: home, team_away: away })
+      });
+      if (res.ok) {
+        showToast(`Match updated: ${home} vs ${away}`, 'success');
+        loadTBDMatches();
+        loadMatches(); // Refresh the results list so the new match appears
+      } else {
+        showToast('Error updating match', 'error');
+      }
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+  </script>
+</body>
+</html>
