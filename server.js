@@ -390,6 +390,31 @@ app.get('/api/standings', (req, res) => {
   res.json(result);
 });
 
+// Admin: Full reset
+app.post('/api/admin/reset', (req, res) => {
+  const db = { players: [], matches: [], predictions: [], nextId: { player: 1, match: 1, prediction: 1 } };
+
+  // Re-seed matches from seed-data.json
+  const seedData = require('./seed-data.json');
+  for (const m of seedData) {
+    db.matches.push({
+      id: db.nextId.match++,
+      match_date: m.match_date,
+      match_time: m.match_time || null,
+      match_number: m.match_number || null,
+      group_stage: m.group_stage || null,
+      team_home: m.team_home,
+      team_away: m.team_away,
+      score_home: null,
+      score_away: null,
+      is_completed: false
+    });
+  }
+
+  saveDB(db);
+  res.json({ success: true, matches: db.matches.length });
+});
+
 // Delete a player (admin)
 app.delete('/api/admin/players/:playerId', (req, res) => {
   const playerId = parseInt(req.params.playerId);
