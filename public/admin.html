@@ -82,6 +82,13 @@
       <div id="players-admin-list"></div>
     </div>
 
+    <!-- Reset Everything -->
+    <div style="background:rgba(220,53,69,0.08);border:1px solid rgba(220,53,69,0.3);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;">
+      <h3 style="color:#dc3545;margin-bottom:0.5rem;">⚠️ Reset Database</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:0.8rem;">This will delete ALL players, predictions, and scores. Matches will be re-seeded with knockout games back to TBD. This cannot be undone.</p>
+      <button onclick="resetEverything()" class="btn-save" style="background:#dc3545;">🗑️ Reset Everything</button>
+    </div>
+
     <!-- Update Knockout Teams -->
     <div style="background:rgba(22,36,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;">
       <h3 style="color:#e8e8e8;margin-bottom:0.5rem;">🏟️ Update Knockout Match Teams</h3>
@@ -267,6 +274,20 @@
     }
 
     // ============ MANAGE PLAYERS ============
+    async function resetEverything() {
+      if (!confirm('⚠️ Are you sure? This will DELETE all players, predictions, and scores.')) return;
+      if (!confirm('⚠️ LAST CHANCE — This cannot be undone. Type OK to confirm.')) return;
+
+      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Reset complete! ${data.matches} matches re-seeded.`, 'success');
+        loadMatches();
+      } else {
+        showToast('Error resetting', 'error');
+      }
+    }
+
     async function loadPlayersAdmin() {
       const res = await fetch('/api/players');
       const players = await res.json();
