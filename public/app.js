@@ -594,7 +594,7 @@ function renderIndividualLeaderboard(data) {
   data.forEach((p, i) => {
     const rank = i < 3 ? `<span class="medal">${medals[i]}</span>` : i + 1;
     const isMe = currentPlayer && p.id === currentPlayer.id;
-    const rowStyle = isMe ? 'style="background:#fff3cd;"' : '';
+    const rowStyle = isMe ? 'style="background:rgba(212,175,55,0.15);"' : '';
     html += `<tr ${rowStyle}><td class="rank">${rank}</td><td>${p.name}</td><td>${getFlag(p.country)} ${p.country}</td><td>${p.team}</td><td class="points">${p.total_points}</td><td>${p.exact_scores}</td><td>${p.correct_outcomes}</td></tr>`;
   });
   html += '</tbody></table>';
