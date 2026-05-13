@@ -296,12 +296,66 @@
         container.innerHTML = '<p style="color:rgba(255,255,255,0.5);">No players registered.</p>';
         return;
       }
-      container.innerHTML = players.map(p => `
-        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="flex:1;">${p.name} <span style="color:rgba(255,255,255,0.4);">(${p.alias}) — ${p.team}</span></span>
-          <button onclick="removePlayer(${p.id}, '${p.name}')" style="background:#dc3545;color:white;border:none;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Remove</button>
-        </div>
-      `).join('');
+
+      let html = `<div style="margin-bottom:0.8rem;display:flex;gap:0.5rem;">
+        <button onclick="exportPlayers()" class="btn-save" style="background:#17a2b8;">📥 Export Player Data (CSV)</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);">
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">Name</th>
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">Login</th>
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">Team</th>
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">Country</th>
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">WC Winner Pick</th>
+          <th style="padding:0.5rem;text-align:left;color:rgba(255,255,255,0.7);">Actions</th>
+        </tr></thead><tbody>`;
+
+      for (const p of players) {
+        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:0.5rem;">${p.name}</td>
+          <td style="padding:0.5rem;color:rgba(255,255,255,0.5);">${p.alias}</td>
+          <td style="padding:0.5rem;">
+            <select id="player-team-${p.id}" style="padding:0.3rem;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(15,25,35,0.8);color:white;font-size:0.8rem;">
+              ${['NL','BE','PL','IE','SE','ESM OOC','PM','SSR/SX','Exports'].map(t => `<option value="${t}" ${t === p.team ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:0.5rem;">
+            <select id="player-country-${p.id}" style="padding:0.3rem;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(15,25,35,0.8);color:white;font-size:0.8rem;">
+              ${ALL_TEAMS.map(c => `<option value="${c}" ${c === p.country ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:0.5rem;">
+            <select id="player-winner-${p.id}" style="padding:0.3rem;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(15,25,35,0.8);color:white;font-size:0.8rem;">
+              <option value="">None</option>
+              ${ALL_TEAMS.map(c => `<option value="${c}" ${c === p.winner_prediction ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:0.5rem;display:flex;gap:0.3rem;">
+            <button onclick="updatePlayer(${p.id})" class="btn-save" style="font-size:0.75rem;padding:0.3rem 0.5rem;">Save</button>
+            <button onclick="removePlayer(${p.id}, '${p.name}')" style="background:#dc3545;color:white;border:none;padding:0.3rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;">Remove</button>
+          </td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    async function updatePlayer(id) {
+      const team = document.getElementById(`player-team-${id}`).value;
+      const country = document.getElementById(`player-country-${id}`).value;
+      const winner_prediction = document.getElementById(`player-winner-${id}`).value;
+
+      const res = await fetch(`/api/admin/players/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team, country, winner_prediction })
+      });
+      if (res.ok) {
+        showToast('Player updated', 'success');
+      } else {
+        showToast('Error updating player', 'error');
+      }
     }
 
     async function removePlayer(id, name) {
@@ -313,6 +367,21 @@
       } else {
         showToast('Error removing player', 'error');
       }
+    }
+
+    function exportPlayers() {
+      fetch('/api/players').then(r => r.json()).then(players => {
+        const headers = ['Name', 'Login', 'Team', 'Country', 'WC Winner Pick'];
+        const rows = players.map(p => [p.name, p.alias, p.team, p.country, p.winner_prediction || '']);
+        const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'players_export.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
     }
 
     // ============ TBD KNOCKOUT MATCHES ============
