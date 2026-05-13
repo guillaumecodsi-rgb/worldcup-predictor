@@ -390,6 +390,22 @@ app.get('/api/standings', (req, res) => {
   res.json(result);
 });
 
+// Delete a match (admin)
+app.delete('/api/admin/matches/:matchId', (req, res) => {
+  const matchId = parseInt(req.params.matchId);
+  const db = loadDB();
+
+  const matchIndex = db.matches.findIndex(m => m.id === matchId);
+  if (matchIndex === -1) return res.status(404).json({ error: 'Match not found' });
+
+  // Remove match and any predictions for it
+  db.matches.splice(matchIndex, 1);
+  db.predictions = db.predictions.filter(p => p.match_id !== matchId);
+
+  saveDB(db);
+  res.json({ success: true });
+});
+
 // Admin: Full reset
 app.post('/api/admin/reset', (req, res) => {
   const db = { players: [], matches: [], predictions: [], nextId: { player: 1, match: 1, prediction: 1 } };
