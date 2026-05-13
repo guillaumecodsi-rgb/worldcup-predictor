@@ -431,6 +431,23 @@ app.post('/api/admin/reset', (req, res) => {
   res.json({ success: true, matches: db.matches.length });
 });
 
+// Update a player (admin)
+app.put('/api/admin/players/:playerId', (req, res) => {
+  const playerId = parseInt(req.params.playerId);
+  const { team, country, winner_prediction } = req.body;
+  const db = loadDB();
+
+  const player = db.players.find(p => p.id === playerId);
+  if (!player) return res.status(404).json({ error: 'Player not found' });
+
+  if (team) player.team = team;
+  if (country) player.country = country;
+  if (winner_prediction !== undefined) player.winner_prediction = winner_prediction || null;
+
+  saveDB(db);
+  res.json({ success: true, player });
+});
+
 // Delete a player (admin)
 app.delete('/api/admin/players/:playerId', (req, res) => {
   const playerId = parseInt(req.params.playerId);
