@@ -74,7 +74,28 @@ function checkSession() {
   const saved = localStorage.getItem('wc_player');
   if (saved) {
     currentPlayer = JSON.parse(saved);
-    showLoggedIn();
+    // Verify player still exists in database
+    fetch(`/api/players/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alias: currentPlayer.alias })
+    }).then(res => {
+      if (!res.ok) {
+        // Player no longer exists
+        currentPlayer = null;
+        localStorage.removeItem('wc_player');
+        showToast('We had a technical hiccup and your profile was lost. Please re-register to get back in the game! 🙏 (you can use the same login)', 'error');
+        setTimeout(() => showAuth('register'), 2000);
+      } else {
+        res.json().then(data => {
+          currentPlayer = data;
+          localStorage.setItem('wc_player', JSON.stringify(data));
+          showLoggedIn();
+        });
+      }
+    }).catch(() => {
+      showLoggedIn(); // Network error — let them in anyway
+    });
   }
 }
 
