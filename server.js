@@ -174,7 +174,7 @@ app.post('/api/matches/:matchId/result', async (req, res) => {
 // Leaderboard - Individual
 app.get('/api/leaderboard/individual', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
-  const { data: predictions } = await supabase.from('predictions').select('*');
+  const { data: predictions, count } = await supabase.from('predictions').select('*', { count: 'exact' }).limit(10000);
 
   const leaderboard = (players || []).map(p => {
     const preds = (predictions || []).filter(pr => pr.player_id === p.id);
@@ -196,7 +196,7 @@ app.get('/api/leaderboard/individual', async (req, res) => {
 // Leaderboard - By Team
 app.get('/api/leaderboard/team', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
-  const { data: predictions } = await supabase.from('predictions').select('*');
+  const { data: predictions } = await supabase.from('predictions').select('*').limit(10000);
 
   const teamMap = {};
   for (const p of (players || [])) {
@@ -261,7 +261,7 @@ app.get('/api/standings', async (req, res) => {
 app.get('/api/stats/streaks', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
   const { data: matches } = await supabase.from('matches').select('*').eq('is_completed', true).order('match_date').order('id');
-  const { data: predictions } = await supabase.from('predictions').select('*');
+  const { data: predictions } = await supabase.from('predictions').select('*').limit(10000);
 
   const playerStreaks = [];
   const playerExpertStreaks = [];
@@ -289,7 +289,7 @@ app.get('/api/stats/streaks', async (req, res) => {
 app.get('/api/stats/teams', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
   const { data: matches } = await supabase.from('matches').select('id').neq('team_home', 'TBD');
-  const { data: predictions } = await supabase.from('predictions').select('player_id,match_id');
+  const { data: predictions } = await supabase.from('predictions').select('player_id,match_id').limit(10000);
   const predictableMatches = (matches || []).length;
 
   const teamMap = {};
