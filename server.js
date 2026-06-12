@@ -174,10 +174,21 @@ app.post('/api/matches/:matchId/result', async (req, res) => {
 // Leaderboard - Individual
 app.get('/api/leaderboard/individual', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
-  const { data: predictions, count } = await supabase.from('predictions').select('*', { count: 'exact' }).limit(10000);
+  
+  // Fetch all predictions with pagination (Supabase caps at 1000 per query)
+  let allPredictions = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data: batch } = await supabase.from('predictions').select('player_id,points_earned').range(from, from + pageSize - 1);
+    if (!batch || batch.length === 0) break;
+    allPredictions = allPredictions.concat(batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
 
   const leaderboard = (players || []).map(p => {
-    const preds = (predictions || []).filter(pr => pr.player_id === p.id);
+    const preds = allPredictions.filter(pr => pr.player_id === p.id);
     const total_points = preds.reduce((sum, pr) => sum + pr.points_earned, 0) + (p.winner_bonus || 0);
     return {
       id: p.id, name: p.name, country: p.country, team: p.team,
@@ -196,13 +207,23 @@ app.get('/api/leaderboard/individual', async (req, res) => {
 // Leaderboard - By Team
 app.get('/api/leaderboard/team', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
-  const { data: predictions } = await supabase.from('predictions').select('*').limit(10000);
+  
+  let allPredictions = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data: batch } = await supabase.from('predictions').select('player_id,points_earned').range(from, from + pageSize - 1);
+    if (!batch || batch.length === 0) break;
+    allPredictions = allPredictions.concat(batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
 
   const teamMap = {};
   for (const p of (players || [])) {
     if (!teamMap[p.team]) teamMap[p.team] = { team: p.team, members: new Set(), total_points: 0, exact_scores: 0, correct_outcomes: 0 };
     teamMap[p.team].members.add(p.id);
-    const preds = (predictions || []).filter(pr => pr.player_id === p.id);
+    const preds = allPredictions.filter(pr => pr.player_id === p.id);
     for (const pr of preds) {
       teamMap[p.team].total_points += pr.points_earned;
       if (pr.points_earned === 3) teamMap[p.team].exact_scores++;
@@ -261,14 +282,23 @@ app.get('/api/standings', async (req, res) => {
 app.get('/api/stats/streaks', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
   const { data: matches } = await supabase.from('matches').select('*').eq('is_completed', true).order('match_date').order('id');
-  const { data: predictions } = await supabase.from('predictions').select('*').limit(10000);
+  
+  let allPredictions = [];
+  let from = 0;
+  while (true) {
+    const { data: batch } = await supabase.from('predictions').select('player_id,match_id,points_earned').range(from, from + 999);
+    if (!batch || batch.length === 0) break;
+    allPredictions = allPredictions.concat(batch);
+    if (batch.length < 1000) break;
+    from += 1000;
+  }
 
   const playerStreaks = [];
   const playerExpertStreaks = [];
 
   for (const player of (players || [])) {
     const predMap = {};
-    (predictions || []).filter(pr => pr.player_id === player.id).forEach(p => { predMap[p.match_id] = p; });
+    allPredictions.filter(pr => pr.player_id === player.id).forEach(p => { predMap[p.match_id] = p; });
 
     let currentStreak = 0, longestStreak = 0, currentExpert = 0, longestExpert = 0;
     for (const match of (matches || [])) {
@@ -289,14 +319,23 @@ app.get('/api/stats/streaks', async (req, res) => {
 app.get('/api/stats/teams', async (req, res) => {
   const { data: players } = await supabase.from('players').select('*');
   const { data: matches } = await supabase.from('matches').select('id').neq('team_home', 'TBD');
-  const { data: predictions } = await supabase.from('predictions').select('player_id,match_id').limit(10000);
+  
+  let allPredictions = [];
+  let from = 0;
+  while (true) {
+    const { data: batch } = await supabase.from('predictions').select('player_id,match_id').range(from, from + 999);
+    if (!batch || batch.length === 0) break;
+    allPredictions = allPredictions.concat(batch);
+    if (batch.length < 1000) break;
+    from += 1000;
+  }
   const predictableMatches = (matches || []).length;
 
   const teamMap = {};
   for (const p of (players || [])) {
     if (!teamMap[p.team]) teamMap[p.team] = { team: p.team, count: 0, completed: 0 };
     teamMap[p.team].count++;
-    const playerPreds = (predictions || []).filter(pr => pr.player_id === p.id);
+    const playerPreds = allPredictions.filter(pr => pr.player_id === p.id);
     if (predictableMatches > 0 && playerPreds.length >= predictableMatches) teamMap[p.team].completed++;
   }
 
